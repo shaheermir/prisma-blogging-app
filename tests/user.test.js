@@ -1,5 +1,4 @@
 import "cross-fetch/polyfill"
-import { gql } from "apollo-boost"
 
 import prisma from "../src/prisma"
 import getClient from "./utils/getClient"
@@ -34,7 +33,7 @@ test("should create a new user", async () => {
 test("Should expose public author profiles", async () => {
   const response = await client.query({ query: getUsers })
 
-  expect(response.data.users.length).toBe(1)
+  expect(response.data.users.length).toBe(2)
   expect(response.data.users[0].email).toBe(null)
   expect(response.data.users[0].name).toBe("Jen")
 })

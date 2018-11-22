@@ -12,7 +12,6 @@ const createUser = gql`
     }
   }
 `
-
 const getUsers = gql`
   query {
     users {
@@ -22,7 +21,6 @@ const getUsers = gql`
     }
   }
 `
-
 const getMyProfile = gql`
   query {
     me {
@@ -32,7 +30,6 @@ const getMyProfile = gql`
     }
   }
 `
-
 const login = gql`
   mutation($data: LoginUserInput!) {
     login(data: $data) {
@@ -41,4 +38,77 @@ const login = gql`
   }
 `
 
-export { createUser, getUsers, getMyProfile, login }
+const getPosts = gql`
+  query {
+    posts {
+      id
+      title
+      body
+      published
+    }
+  }
+`
+const myPosts = gql`
+  query {
+    myPosts {
+      id
+      title
+      body
+      published
+    }
+  }
+`
+const updatePost = gql`
+  mutation($id: ID!, $data: UpdatePostInput!) {
+    updatePost(id: $id, data: $data) {
+      id
+      title
+      body
+      published
+    }
+  }
+`
+
+const createPost = gql`
+  mutation($data: CreatePostInput!) {
+    createPost(data: $data) {
+      id
+      title
+      body
+      published
+    }
+  }
+`
+
+const deletePost = gql`
+  mutation($id: ID!) {
+    deletePost(id: $id) {
+      id
+      title
+      body
+      published
+    }
+  }
+`
+
+const deleteComment = gql`
+  mutation($id: ID!) {
+    deleteComment(id: $id) {
+      id
+      text
+    }
+  }
+`
+
+export {
+  createUser,
+  getUsers,
+  getMyProfile,
+  login,
+  getPosts,
+  myPosts,
+  updatePost,
+  createPost,
+  deletePost,
+  deleteComment
+}

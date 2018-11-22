@@ -5,22 +5,19 @@ import prisma from "../src/prisma"
 import getClient from "./utils/getClient"
 import seedDatabase, { userOne, postOne, postTwo } from "./utils/seedDatabase"
 
+import {
+  getPosts,
+  myPosts,
+  updatePost,
+  createPost,
+  deletePost
+} from "./utils/operations"
+
 const client = getClient()
 
 beforeEach(seedDatabase)
 
 test("should expose only published posts", async () => {
-  const getPosts = gql`
-    query {
-      posts {
-        id
-        title
-        body
-        published
-      }
-    }
-  `
-
   const response = await client.query({ query: getPosts })
 
   expect(response.data.posts.length).toBe(1)
@@ -29,16 +26,6 @@ test("should expose only published posts", async () => {
 
 test("should fetch users post", async () => {
   const client = getClient(userOne.jwt)
-  const myPosts = gql`
-    query {
-      myPosts {
-        id
-        title
-        body
-        published
-      }
-    }
-  `
 
   const { data } = await client.query({ query: myPosts })
 
@@ -48,23 +35,14 @@ test("should fetch users post", async () => {
 test("should be able to update own post", async () => {
   const client = getClient(userOne.jwt)
 
-  const updatePost = gql`
-    mutation {
-      updatePost(
-        id: "${postOne.post.id}",
-        data: {
-          published: false
-        }
-      ) {
-        id
-        title
-        body
-        published
-      }
+  const variables = {
+    id: postOne.post.id,
+    data: {
+      published: false
     }
-  `
+  }
 
-  const { data } = await client.mutate({ mutation: updatePost })
+  const { data } = await client.mutate({ mutation: updatePost, variables })
   const exists = await prisma.exists.Post({
     id: postOne.post.id,
     published: false
@@ -76,54 +54,32 @@ test("should be able to update own post", async () => {
 
 test("should be able to create post", async () => {
   const client = getClient(userOne.jwt)
-  const newPost = {
-    title: "JavaScript in 2018",
-    body: "...",
-    published: true
+
+  const variables = {
+    data: {
+      title: "JavaScript in 2018",
+      body: "...",
+      published: true
+    }
   }
 
-  const createPost = gql`
-    mutation {
-      createPost(
-        data: {
-          title: "${newPost.title}",
-          body: "${newPost.body}",
-          published: ${newPost.published}
-        }
-      ) {
-        id
-        title
-        body
-        published
-      }
-    }
-  `
-
-  const { data } = await client.mutate({ mutation: createPost })
+  const { data } = await client.mutate({ mutation: createPost, variables })
   const exists = await prisma.exists.Post({
     id: data.createPost.id,
-    ...newPost
+    ...variables.data
   })
 
-  expect(data.createPost.title).toBe(newPost.title)
+  expect(data.createPost.title).toBe(variables.data.title)
   expect(exists).toBe(true)
 })
 
 test("should be able to delete own post", async () => {
   const client = getClient(userOne.jwt)
+  const variables = {
+    id: postTwo.post.id
+  }
 
-  const deletePost = gql`
-    mutation {
-      deletePost(id: "${postTwo.post.id}") {
-        id
-        title
-        body
-        published
-      }
-    }
-  `
-
-  await client.mutate({ mutation: deletePost })
+  await client.mutate({ mutation: deletePost, variables })
 
   const exists = await prisma.exists.Post({ id: postTwo.post.id })
 
