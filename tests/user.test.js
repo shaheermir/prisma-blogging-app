@@ -1,12 +1,11 @@
 import "cross-fetch/polyfill"
-import ApolloBoost, { gql } from "apollo-boost"
+import { gql } from "apollo-boost"
 
 import prisma from "../src/prisma"
-import seedDatabase from "./utils/seedDatabase"
+import getClient from "./utils/getClient"
+import seedDatabase, { userOne } from "./utils/seedDatabase"
 
-const client = new ApolloBoost({
-  uri: "http://localhost:4000"
-})
+const client = getClient()
 
 beforeEach(seedDatabase)
 
@@ -65,4 +64,24 @@ test("should not sign up with a password less than 8 chars", async () => {
   `
 
   await expect(client.mutate({ mutation: createUser })).rejects.toThrow()
+})
+
+test("should fetch user profile", async () => {
+  const client = getClient(userOne.jwt)
+
+  const getMyProfile = gql`
+    query {
+      me {
+        id
+        name
+        email
+      }
+    }
+  `
+
+  const response = await client.query({ query: getMyProfile })
+
+  expect(response.data.me.id).toBe(userOne.user.id)
+  expect(response.data.me.name).toBe(userOne.user.name)
+  expect(response.data.me.email).toBe(userOne.user.email)
 })

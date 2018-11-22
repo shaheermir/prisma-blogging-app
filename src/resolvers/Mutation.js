@@ -93,7 +93,7 @@ const Mutation = {
       throw new Error("Post could not be updated.")
     }
 
-    const isPublished = await prisma.query.Post({
+    const isPublished = await prisma.exists.Post({
       id: args.id,
       published: true
     })
