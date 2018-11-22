@@ -4,31 +4,24 @@ import { gql } from "apollo-boost"
 import prisma from "../src/prisma"
 import getClient from "./utils/getClient"
 import seedDatabase, { userOne } from "./utils/seedDatabase"
+import { createUser, getUsers, getMyProfile, login } from "./utils/operations"
 
 const client = getClient()
 
 beforeEach(seedDatabase)
 
 test("should create a new user", async () => {
-  const createUser = gql`
-    mutation {
-      createUser(
-        data: {
-          name: "Umais Mir"
-          email: "umais@example.com"
-          password: "password100"
-        }
-      ) {
-        token
-        user {
-          id
-        }
-      }
+  const variables = {
+    data: {
+      name: "Umais Mir",
+      email: "umais@example.com",
+      password: "password100"
     }
-  `
+  }
 
   const { data } = await client.mutate({
-    mutation: createUser
+    mutation: createUser,
+    variables
   })
 
   const userExists = await prisma.exists.User({
@@ -38,46 +31,38 @@ test("should create a new user", async () => {
   expect(userExists).toBe(true)
 })
 
-test("should not login with bad credentials", async () => {
-  const login = gql`
-    mutation {
-      login(
-        data: { email: "jen@example.com", password: "letsseeifthisworks" }
-      ) {
-        token
-      }
-    }
-  `
+test("Should expose public author profiles", async () => {
+  const response = await client.query({ query: getUsers })
 
-  await expect(client.mutate({ mutation: login })).rejects.toThrow()
+  expect(response.data.users.length).toBe(1)
+  expect(response.data.users[0].email).toBe(null)
+  expect(response.data.users[0].name).toBe("Jen")
+})
+
+test("should not login with bad credentials", async () => {
+  const variables = {
+    data: { email: "jen@example.com", password: "letsseeifthisworks" }
+  }
+
+  await expect(client.mutate({ mutation: login, variables })).rejects.toThrow()
 })
 
 test("should not sign up with a password less than 8 chars", async () => {
-  const createUser = gql`
-    mutation {
-      createUser(
-        data: { name: "Joe", email: "joe@example.com", password: "2short" }
-      ) {
-        token
-      }
+  const variables = {
+    data: {
+      name: "Joe",
+      email: "joe@example.com",
+      password: "2short"
     }
-  `
+  }
 
-  await expect(client.mutate({ mutation: createUser })).rejects.toThrow()
+  await expect(
+    client.mutate({ mutation: createUser, variables })
+  ).rejects.toThrow()
 })
 
 test("should fetch user profile", async () => {
   const client = getClient(userOne.jwt)
-
-  const getMyProfile = gql`
-    query {
-      me {
-        id
-        name
-        email
-      }
-    }
-  `
 
   const response = await client.query({ query: getMyProfile })
 
