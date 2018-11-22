@@ -10,7 +10,8 @@ import {
   myPosts,
   updatePost,
   createPost,
-  deletePost
+  deletePost,
+  subscribeToPosts
 } from "./utils/operations"
 
 const client = getClient()
@@ -84,4 +85,24 @@ test("should be able to delete own post", async () => {
   const exists = await prisma.exists.Post({ id: postTwo.post.id })
 
   expect(exists).toBe(false)
+})
+
+test("should subscribe to posts", async done => {
+  const data = {
+    title: "Updated Title!"
+  }
+
+  client.subscribe({ query: subscribeToPosts }).subscribe({
+    next(response) {
+      expect(response.data.post.mutation).toBe("UPDATED")
+      expect(response.data.post.node.id).toBe(postOne.post.id)
+      expect(response.data.post.node.title).toBe(data.title)
+      done()
+    }
+  })
+
+  await prisma.mutation.updatePost({
+    where: { id: postOne.post.id },
+    data
+  })
 })
