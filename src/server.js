@@ -14,10 +14,10 @@ const server = new GraphQLServer({
       db,
       pubsub,
       prisma,
-      request,
-      fragmentReplacements
+      request
     }
-  }
+  },
+  fragmentReplacements
 })
 
 export default server
